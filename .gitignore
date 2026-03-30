@@ -1,4 +1,5 @@
 .build/
-ProcessGuard
+/ProcessGuard
+/ProcessGuard.app
 *.o
 .DS_Store
