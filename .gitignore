@@ -1,0 +1,4 @@
+.build/
+ProcessGuard
+*.o
+.DS_Store
