@@ -166,6 +166,8 @@ class Guard: NSObject {
         menu.addItem(NSMenuItem.separator())
         let ref = NSMenuItem(title: "Refresh Now", action: #selector(refresh), keyEquivalent: "r")
         ref.target = self; menu.addItem(ref)
+        let gh = NSMenuItem(title: "GitHub", action: #selector(openGitHub), keyEquivalent: "")
+        gh.target = self; menu.addItem(gh)
         menu.addItem(NSMenuItem(title: "Quit ProcessGuard", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         statusItem.menu = menu
@@ -198,12 +200,24 @@ class Guard: NSObject {
         }
     }
 
+    @objc func openGitHub() {
+        NSWorkspace.shared.open(URL(string: "https://github.com/bamboozledkitty/process-guard")!)
+    }
+
     @objc func doInvestigate(_ sender: NSMenuItem) {
         guard sender.tag < cpuProcs.count else { return }
         let p = cpuProcs[sender.tag]
         let prompt = "Investigate process \(p.displayName) (PID \(p.pid)) using \(String(format:"%.1f",p.cpu))% CPU and \(String(format:"%.1f",p.mem))% memory, running for \(p.elapsed). Determine if it is safe to kill and why it is using so much CPU."
-        let safe = prompt.replacingOccurrences(of: "\"", with: "\\\"")
-        let scr = "tell application \"Terminal\"\nactivate\ndo script \"claude \\\"" + safe + "\\\"\"\nend tell"
+
+        // Shell single quotes prevent ALL expansion ($(), backticks, etc.)
+        // Only ' needs escaping inside single quotes: ' → '\''
+        // Then escape " and \ for the AppleScript string layer
+        var safe = prompt
+        safe = safe.replacingOccurrences(of: "'", with: "'\\''")
+        safe = safe.replacingOccurrences(of: "\\", with: "\\\\")
+        safe = safe.replacingOccurrences(of: "\"", with: "\\\"")
+
+        let scr = "tell application \"Terminal\"\nactivate\ndo script \"claude '\(safe)'\"\nend tell"
         let t = Process()
         t.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         t.arguments = ["-e", scr]

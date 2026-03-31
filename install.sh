@@ -6,10 +6,17 @@ cd "$(dirname "$0")"
 echo "Building ProcessGuard..."
 swiftc -O -o ProcessGuard Sources/ProcessGuard/main.swift -framework AppKit
 
-INSTALL_DIR="$HOME/.local/bin"
-mkdir -p "$INSTALL_DIR"
-cp ProcessGuard "$INSTALL_DIR/ProcessGuard"
-echo "Installed to $INSTALL_DIR/ProcessGuard"
+# Put the fresh binary into the app bundle
+cp ProcessGuard ProcessGuard.app/Contents/MacOS/ProcessGuard
+
+# Install the app bundle to ~/Applications
+APP_DEST="$HOME/Applications/ProcessGuard.app"
+mkdir -p "$HOME/Applications"
+rm -rf "$APP_DEST"
+cp -R ProcessGuard.app "$APP_DEST"
+echo "Installed to $APP_DEST"
+
+APP_BINARY="$APP_DEST/Contents/MacOS/ProcessGuard"
 
 # Create LaunchAgent for auto-start on login
 PLIST="$HOME/Library/LaunchAgents/com.keithvaz.processguard.plist"
@@ -22,7 +29,7 @@ cat > "$PLIST" << EOF
     <string>com.keithvaz.processguard</string>
     <key>ProgramArguments</key>
     <array>
-        <string>${INSTALL_DIR}/ProcessGuard</string>
+        <string>${APP_BINARY}</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -34,6 +41,6 @@ EOF
 
 echo "Created LaunchAgent at $PLIST"
 echo ""
-echo "To start now:  $INSTALL_DIR/ProcessGuard &"
+echo "To start now:  open $APP_DEST"
 echo "To auto-start: launchctl load $PLIST"
 echo "To stop auto:  launchctl unload $PLIST"
