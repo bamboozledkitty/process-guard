@@ -6,8 +6,33 @@ cd "$(dirname "$0")"
 echo "Building ProcessGuard..."
 swiftc -O -o ProcessGuard Sources/ProcessGuard/main.swift -framework AppKit
 
-# Put the fresh binary into the app bundle
+# Build the .app bundle structure
+mkdir -p ProcessGuard.app/Contents/MacOS
 cp ProcessGuard ProcessGuard.app/Contents/MacOS/ProcessGuard
+
+# Write Info.plist if missing
+if [ ! -f ProcessGuard.app/Contents/Info.plist ]; then
+cat > ProcessGuard.app/Contents/Info.plist << 'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>ProcessGuard</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.keithvaz.processguard</string>
+    <key>CFBundleName</key>
+    <string>ProcessGuard</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>LSBackgroundOnly</key>
+    <true/>
+    <key>LSUIElement</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+fi
 
 # Install the app bundle to ~/Applications
 APP_DEST="$HOME/Applications/ProcessGuard.app"
